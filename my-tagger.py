@@ -11,6 +11,10 @@ from loader import prepare_sentence
 from utils import create_input, iobes_iob, iob_ranges, zero_digits
 from model import Model
 
+from ccg_nlpy.core.text_annotation import TextAnnotation
+
+from ccg_nlpy.core.view import View
+
 optparser = optparse.OptionParser()
 optparser.add_option(
     "-m", "--model", default="",
@@ -97,6 +101,8 @@ for sent_end_offset in document.sentences['sentenceEndPositions']:
         assert len(y_preds) == len(words)
         assert len(y_preds) == len(words_ini)
 
+        print(y_preds)
+
         idx = 0
         while idx < len(y_preds):
             if y_preds[idx] == "O":
@@ -117,6 +123,8 @@ for sent_end_offset in document.sentences['sentenceEndPositions']:
     if count % 100 == 0:
         print count
 
+view_as_json['viewName'] = 'NER_CONLL'
+
 view_as_json['viewData'] = [{'viewType': 'edu.illinois.cs.cogcomp.core.datastructures.textannotation.View', 'viewName': 'NER_CONLL', 'generator': 'my-lstm-crf-tagger', 'score': 1.0, 'constituents': cons_list}]
 
 view_obj = View(view_as_json, document.get_tokens)
@@ -125,7 +133,7 @@ document.view_dictionary['NER_CONLL'] = view_obj
 
 document_json = document.as_json
 
-json.dump(docta_json, open(opts.output, "w"), indent=True)
+json.dump(document_json, open(opts.output, "w"), indent=True)
 
 
 print '---- %i lines tagged in %.4fs ----' % (count, time.time() - start)
