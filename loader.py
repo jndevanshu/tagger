@@ -166,7 +166,7 @@ def augment_with_pretrained(dictionary, ext_emb_path, words):
     # Load pretrained embeddings from file
     pretrained = set([
         line.rstrip().split()[0].strip()
-        for line in codecs.open(ext_emb_path, 'r', 'utf-8')
+        for line in codecs.open(ext_emb_path, 'r', 'utf-8', errors='ignore')
         if len(ext_emb_path) > 0
     ])
 
