@@ -24,7 +24,16 @@ def load_sentences(path, lower, zeros, ratio=1.0):
         for ner_constituent in ner_labels:
             for span in range(ner_constituent['start'], ner_constituent['end']):
                 ner_dict[span] = ner_constituent['label']
-        sentences_cons_list = document.view_dictionary['SENTENCE'].cons_list
+        try:
+            sentences_cons_list = document.view_dictionary['SENTENCE'].cons_list
+        except KeyError as e:
+            print("here")
+            sentences_cons_list = []
+            start = 0
+            for end in document.sentence_end_position:
+                sent = " ".join(document.tokens[start:end])
+                sentences_cons_list.append({'tokens': sent, 'start': start, 'end': end})
+                start = end
         for sent_constituent in sentences_cons_list:
             sentence = []
             print(sent_constituent)
