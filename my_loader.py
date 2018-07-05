@@ -17,6 +17,7 @@ def load_sentences(path, lower, zeros, ratio=1.0):
 
     file_list = os.listdir(path)
     sentences = []
+    label_list = set()
     for doc in file_list:
         print("Reading " + os.path.join(path, doc))
         document = TextAnnotation(json_str=open(os.path.join(path, doc)).read())
@@ -30,6 +31,9 @@ def load_sentences(path, lower, zeros, ratio=1.0):
                     ner_dict[span] = "B-" + ner_constituent['label']
                 else:
                     ner_dict[span] = "I-" + ner_constituent['label']
+                if ner_dict[span] not in label_list:
+                    label_list.add(ner_dict[span])
+                    print(ner_dict[span])
         try:
             sentences_cons_list = document.view_dictionary['SENTENCE'].cons_list
         except KeyError as e:
@@ -212,7 +216,7 @@ def augment_with_pretrained(dictionary, ext_emb_path, words):
     # Load pretrained embeddings from file
     pretrained = set([
         line.rstrip().split()[0].strip()
-        for line in codecs.open(ext_emb_path, 'r', 'utf-8')
+        for line in codecs.open(ext_emb_path, 'r', 'utf-8', errors='ignore')
         if len(ext_emb_path) > 0
     ])
 
