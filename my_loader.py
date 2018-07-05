@@ -130,26 +130,26 @@ def gazetteer_mapping(filename):
         data = f.readlines()
     data = [(line.strip().split(";")[1], line.strip().split(";")[2]) for line in data if len(line.strip()) > 0]
     dict_gtr = defaultdict(lambda: 0)
-    gtr_to_id = {"<UNK>": 0}
-    id_to_gtr = {0: "<UNK>"}
+    gtr_to_id = {"<UNK>": 0, "G": 1}
+    id_to_gtr = {0: "<UNK>", 1: "G"}
     idx = 0
-    for (_, tag) in data:
-        if "B-" + tag not in gtr_to_id:
-            gtr_to_id["B-" + tag] = idx + 1
-            id_to_gtr[idx + 1] = "B-" + tag
-            idx += 1
-        if "I-" + tag not in gtr_to_id:
-            gtr_to_id["I-" + tag] = idx + 1
-            id_to_gtr[idx + 1] = "I-" + tag
-            idx += 1
+    # for (_, tag) in data:
+    #     if "B-" + tag not in gtr_to_id:
+    #         gtr_to_id["B-" + tag] = idx + 1
+    #         id_to_gtr[idx + 1] = "B-" + tag
+    #         idx += 1
+    #     if "I-" + tag not in gtr_to_id:
+    #         gtr_to_id["I-" + tag] = idx + 1
+    #         id_to_gtr[idx + 1] = "I-" + tag
+    #         idx += 1
 
     for (entity, tag) in data:
         token = re.split("\s+", entity)
         for idx in range(len(token)):
             if idx == 0:
-                dict_gtr[token[idx].lower()] = gtr_to_id["B-" + tag]
+                dict_gtr[token[idx].lower()] = 1 # gtr_to_id["B-" + tag]
             else:
-                dict_gtr[token[idx].lower()] = gtr_to_id["I-" + tag]
+                dict_gtr[token[idx].lower()] = 1 # gtr_to_id["I-" + tag]
 
     return dict_gtr, gtr_to_id, id_to_gtr
 
