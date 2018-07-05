@@ -18,7 +18,7 @@ def load_sentences(path, lower, zeros, ratio=1.0):
     file_list = os.listdir(path)
     sentences = []
     for doc in file_list:
-        print(doc)
+        print("Reading " + os.path.join(path, doc))
         document = TextAnnotation(json_str=open(os.path.join(path, doc)).read())
         ner_labels = document.view_dictionary['NER_CONLL'].cons_list
         if ner_labels is None:
@@ -49,7 +49,6 @@ def load_sentences(path, lower, zeros, ratio=1.0):
                     sentence.append([token, ner_dict[span]])
                 else:
                     sentence.append([token, "O"])
-            print(sentence)
             sentences.append(sentence)
 
     # print(sentences)
