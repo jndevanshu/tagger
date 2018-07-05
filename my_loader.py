@@ -4,6 +4,7 @@ import codecs
 import random
 from utils import create_dico, create_mapping, zero_digits
 from utils import iob2, iob_iobes
+from collections import defaultdict
 
 from ccg_nlpy.core.text_annotation import TextAnnotation
 
@@ -55,24 +56,6 @@ def load_sentences(path, lower, zeros, ratio=1.0):
                     sentence.append([token, "O"])
             sentences.append(sentence)
 
-    # print(sentences)
-
-    # sentences = []
-    # sentence = []
-    # for line in codecs.open(path, 'r', 'utf8'):
-    #     line = zero_digits(line.rstrip()) if zeros else line.rstrip()
-    #     if not line:
-    #         if len(sentence) > 0:
-    #             if 'DOCSTART' not in sentence[0][0]:
-    #                 sentences.append(sentence)
-    #             sentence = []
-    #     else:
-    #         word = line.split()
-    #         assert len(word) >= 2
-    #         sentence.append(word)
-    # if len(sentence) > 0:
-    #     if 'DOCSTART' not in sentence[0][0]:
-    #         sentences.append(sentence)
     random.shuffle(sentences)
     train_sentences = sentences[:int(ratio*len(sentences))]
     dev_sentences = sentences[int(ratio*len(sentences)):]
@@ -139,6 +122,37 @@ def tag_mapping(sentences):
     return dico, tag_to_id, id_to_tag
 
 
+def gazetteer_mapping(filename):
+    """
+    Create gazetteer mapping
+    """
+    with open(filename) as f:
+        data = f.readlines()
+    data = [(line.strip().split(";")[1], line.strip().split(";")[2]) for line in data if len(line.strip()) > 0]
+    dict_gtr = defaultdict(lambda: 0)
+    gtr_to_id = {"<UNK>": 0}
+    id_to_gtr = {0: "<UNK>"}
+    idx = 0
+    for (_, tag) in data:
+        if "B-" + tag not in gtr_to_id:
+            gtr_to_id["B-" + tag] = idx + 1
+            id_to_gtr[idx + 1] = "B-" + tag
+            idx += 1
+        if "I-" + tag not in gtr_to_id:
+            gtr_to_id["I-" + tag] = idx + 1
+            id_to_gtr[idx + 1] = "I-" + tag
+            idx += 1
+
+    for (entity, tag) in data:
+        token = re.split("\s+", entity)
+        for idx in range(len(token)):
+            if idx == 0:
+                dict_gtr[token[idx].lower()] = gtr_to_id["B-" + tag]
+            else:
+                dict_gtr[token[idx].lower()] = gtr_to_id["I-" + tag]
+
+    return dict_gtr, gtr_to_id, id_to_gtr
+
 def cap_feature(s):
     """
     Capitalization feature:
@@ -156,8 +170,13 @@ def cap_feature(s):
     else:
         return 3
 
+def gazetteer_feature(s, gazetteer_list):
+    if s.lower() in gazetteer_list:
+        return gazetteer_list[s.lower()]
+    else:
+        return 0
 
-def prepare_sentence(str_words, word_to_id, char_to_id, lower=False):
+def prepare_sentence(str_words, word_to_id, char_to_id, gazetteer_list, lower=False):
     """
     Prepare a sentence for evaluation.
     """
@@ -167,15 +186,17 @@ def prepare_sentence(str_words, word_to_id, char_to_id, lower=False):
     chars = [[char_to_id[c] for c in w if c in char_to_id]
              for w in str_words]
     caps = [cap_feature(w) for w in str_words]
+    gazetteer = [gazetteer_feature(w, gazetteer_list) for w in str_words]
     return {
         'str_words': str_words,
         'words': words,
         'chars': chars,
-        'caps': caps
+        'caps': caps,
+        'gazetteer': gazetteer
     }
 
 
-def prepare_dataset(sentences, word_to_id, char_to_id, tag_to_id, lower=False):
+def prepare_dataset(sentences, word_to_id, char_to_id, gazetteer_list, tag_to_id, lower=False):
     """
     Prepare the dataset. Return a list of lists of dictionaries containing:
         - word indexes
@@ -192,12 +213,14 @@ def prepare_dataset(sentences, word_to_id, char_to_id, tag_to_id, lower=False):
         chars = [[char_to_id[c] for c in w if c in char_to_id]
                  for w in str_words]
         caps = [cap_feature(w) for w in str_words]
+        gazetteer = [gazetteer_feature(w, gazetteer_list) for w in str_words]
         tags = [tag_to_id[w[-1]] for w in s]
         data.append({
             'str_words': str_words,
             'words': words,
             'chars': chars,
             'caps': caps,
+            'gazetteer': gazetteer,
             'tags': tags,
         })
     return data

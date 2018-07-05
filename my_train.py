@@ -9,7 +9,7 @@ from utils import create_input
 import my_loader as loader
 
 from utils import models_path, evaluate, eval_script, eval_temp
-from my_loader import word_mapping, char_mapping, tag_mapping
+from my_loader import word_mapping, char_mapping, tag_mapping, gazetteer_mapping
 from my_loader import update_tag_scheme, prepare_dataset
 from my_loader import augment_with_pretrained
 from model import Model
@@ -27,6 +27,10 @@ optparser.add_option(
 optparser.add_option(
     "-t", "--test", default="",
     help="Test set location"
+)
+optparser.add_option(
+    "-g", "--gazetteer", default="",
+    help="Gazetteer file location"
 )
 optparser.add_option(
     "-s", "--tag_scheme", default="iobes",
@@ -113,9 +117,14 @@ parameters['dropout'] = opts.dropout
 parameters['lr_method'] = opts.lr_method
 
 # Check parameters validity
-# assert os.path.isfile(opts.train)
-# assert os.path.isfile(opts.dev)
-# assert os.path.isfile(opts.test)
+assert os.path.isdir(opts.train)
+assert os.path.isdir(opts.test)
+
+if len(opts.gazetteer.strip()) > 0:
+    parameters['gazetteer'] = opts.gazetteer
+    assert os.path.isfile(opts.gazetteer)
+else:
+    parameters['gazetteer'] = None
 
 assert parameters['char_dim'] > 0 or parameters['word_dim'] > 0
 assert 0. <= parameters['dropout'] < 1.0
@@ -169,16 +178,19 @@ else:
 # Create a dictionary and a mapping for words / POS tags / tags
 dico_chars, char_to_id, id_to_char = char_mapping(train_sentences)
 dico_tags, tag_to_id, id_to_tag = tag_mapping(train_sentences)
+gtr_dict = {}
+if parameters['gazetteer']:
+    gtr_dict, gtr_to_id, id_to_gtr = gazetteer_mapping(parameters['gazetteer'])
 
 # Index data
 train_data = prepare_dataset(
-    train_sentences, word_to_id, char_to_id, tag_to_id, lower
+    train_sentences, word_to_id, char_to_id, gtr_dict, tag_to_id, lower
 )
 dev_data = prepare_dataset(
-    dev_sentences, word_to_id, char_to_id, tag_to_id, lower
+    dev_sentences, word_to_id, char_to_id, gtr_dict, tag_to_id, lower
 )
 test_data = prepare_dataset(
-    test_sentences, word_to_id, char_to_id, tag_to_id, lower
+    test_sentences, word_to_id, char_to_id, gtr_dict, tag_to_id, lower
 )
 
 print "%i / %i / %i sentences in train / dev / test." % (
@@ -186,7 +198,10 @@ print "%i / %i / %i sentences in train / dev / test." % (
 
 # Save the mappings to disk
 print 'Saving the mappings to disk...'
-model.save_mappings(id_to_word, id_to_char, id_to_tag)
+if parameters['gazetteer']:
+    model.save_mappings(id_to_word, id_to_char, id_to_tag, id_to_gtr)
+else:
+    model.save_mappings(id_to_word, id_to_char, id_to_tag)
 
 # Build the model
 f_train, f_eval = model.build(**parameters)

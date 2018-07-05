@@ -49,20 +49,23 @@ class Model(object):
             self.reload_mappings()
         self.components = {}
 
-    def save_mappings(self, id_to_word, id_to_char, id_to_tag):
+    def save_mappings(self, id_to_word, id_to_char, id_to_tag, id_to_gtr=None):
         """
         We need to save the mappings if we want to use the model later.
         """
         self.id_to_word = id_to_word
         self.id_to_char = id_to_char
         self.id_to_tag = id_to_tag
+        self.id_to_gtr = id_to_gtr
         with open(self.mappings_path, 'wb') as f:
             mappings = {
                 'id_to_word': self.id_to_word,
                 'id_to_char': self.id_to_char,
                 'id_to_tag': self.id_to_tag,
+                'id_to_gtr': self.id_to_gtr
             }
             cPickle.dump(mappings, f)
+
 
     def reload_mappings(self):
         """
@@ -131,6 +134,15 @@ class Model(object):
         n_chars = len(self.id_to_char)
         n_tags = len(self.id_to_tag)
 
+        if self.id_to_gtr is not None:
+            is_gtr = True
+        else:
+            is_gtr = False
+
+        # Gazetteer features
+        if is_gtr:
+            n_gtr = len(self.id_to_gtr)
+
         # Number of capitalization features
         if cap_dim:
             n_cap = 4
@@ -144,6 +156,8 @@ class Model(object):
         tag_ids = T.ivector(name='tag_ids')
         if cap_dim:
             cap_ids = T.ivector(name='cap_ids')
+        if is_gtr:
+            gtr_ids = T.ivector(name='gtr_ids')
 
         # Sentence length
         s_len = (word_ids if word_dim else char_pos_ids).shape[0]
@@ -240,6 +254,11 @@ class Model(object):
             cap_layer = EmbeddingLayer(n_cap, cap_dim, name='cap_layer')
             inputs.append(cap_layer.link(cap_ids))
 
+        if is_gtr:
+            input_dim += 1
+            gtr_layer = EmbeddingLayer(n_gtr, 1, name='gtr_layer')
+            inputs.append(gtr_layer.link(gtr_ids))
+
         # Prepare final input
         inputs = T.concatenate(inputs, axis=1) if len(inputs) != 1 else inputs[0]
 
@@ -332,6 +351,9 @@ class Model(object):
         if cap_dim:
             self.add_component(cap_layer)
             params.extend(cap_layer.params)
+        if is_gtr:
+            self.add_component(gtr_layer)
+            params.extend(gtr_layer.params)
         self.add_component(final_layer)
         params.extend(final_layer.params)
         if crf:
@@ -352,6 +374,8 @@ class Model(object):
             eval_inputs.append(char_pos_ids)
         if cap_dim:
             eval_inputs.append(cap_ids)
+        if is_gtr:
+            eval_inputs.append(gtr_ids)
         train_inputs = eval_inputs + [tag_ids]
 
         # Parse optimization method parameters
