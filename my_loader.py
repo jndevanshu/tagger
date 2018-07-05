@@ -18,8 +18,11 @@ def load_sentences(path, lower, zeros, ratio=1.0):
     file_list = os.listdir(path)
     sentences = []
     for doc in file_list:
+        print(doc)
         document = TextAnnotation(json_str=open(os.path.join(path, doc)).read())
         ner_labels = document.view_dictionary['NER_CONLL'].cons_list
+        if ner_labels is None:
+            ner_labels = []
         ner_dict = {}
         for ner_constituent in ner_labels:
             for span in range(ner_constituent['start'], ner_constituent['end']):
@@ -27,7 +30,6 @@ def load_sentences(path, lower, zeros, ratio=1.0):
         try:
             sentences_cons_list = document.view_dictionary['SENTENCE'].cons_list
         except KeyError as e:
-            print("here")
             sentences_cons_list = []
             start = 0
             for end in document.sentence_end_position:
@@ -36,7 +38,6 @@ def load_sentences(path, lower, zeros, ratio=1.0):
                 start = end
         for sent_constituent in sentences_cons_list:
             sentence = []
-            print(sent_constituent)
             sent = re.split("\s+", sent_constituent['tokens'])
             start = sent_constituent['start']
             end = sent_constituent['end']
