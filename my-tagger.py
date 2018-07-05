@@ -92,13 +92,17 @@ for doc in file_list:
             # Prepare input
             sentence = prepare_sentence(words, word_to_id, char_to_id,
                                         lower=parameters['lower'])
+            print(sentence)
             input = create_input(sentence, parameters, False)
             # Decoding
-            if parameters['crf']:
-                y_preds = np.array(f_eval(*input))[1:-1]
-            else:
-                y_preds = f_eval(*input).argmax(axis=1)
-            y_preds = [model.id_to_tag[y_pred] for y_pred in y_preds]
+            try:
+                if parameters['crf']:
+                    y_preds = np.array(f_eval(*input))[1:-1]
+                else:
+                    y_preds = f_eval(*input).argmax(axis=1)
+                y_preds = [model.id_to_tag[y_pred] for y_pred in y_preds]
+            except Exception as e:
+                y_preds = ["O"] * len(words)
             # Output tags in the IOB2 format
             if parameters['tag_scheme'] == 'iobes':
                 y_preds = iobes_iob(y_preds)
@@ -120,8 +124,9 @@ for doc in file_list:
                         idx += 1
                     cons_list.append({'start': start + st, 'end': start + idx, 'score': 1.0, 'label': curr_label})
                 else:
+                    y_preds[idx] = "B-" + y_preds[idx][2:]
                     print("something wrong....")
-                    sys.exit(1)
+                    # sys.exit(1)
             
         count += 1
         start = sent_end_offset + 1

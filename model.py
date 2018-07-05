@@ -166,7 +166,7 @@ class Model(object):
                 print 'Loading pretrained embeddings from %s...' % pre_emb
                 pretrained = {}
                 emb_invalid = 0
-                for i, line in enumerate(codecs.open(pre_emb, 'r', 'utf-8')):
+                for i, line in enumerate(codecs.open(pre_emb, 'r', 'utf-8', errors='ignore')):
                     line = line.rstrip().split()
                     if len(line) == word_dim + 1:
                         pretrained[line[0]] = np.array(
