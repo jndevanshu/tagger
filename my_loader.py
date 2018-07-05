@@ -26,7 +26,10 @@ def load_sentences(path, lower, zeros, ratio=1.0):
         ner_dict = {}
         for ner_constituent in ner_labels:
             for span in range(ner_constituent['start'], ner_constituent['end']):
-                ner_dict[span] = ner_constituent['label']
+                if span-ner_constituent['start'] == 0:
+                    ner_dict[span] = "B-" + ner_constituent['label']
+                else:
+                    ner_dict[span] = "I-" + ner_constituent['label']
         try:
             sentences_cons_list = document.view_dictionary['SENTENCE'].cons_list
         except KeyError as e:
