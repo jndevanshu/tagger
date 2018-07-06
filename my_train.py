@@ -213,7 +213,7 @@ print "%i / %i / %i sentences in train / dev / test." % (
 
 # Save the mappings to disk
 print 'Saving the mappings to disk...'
-    model.save_mappings(id_to_word, id_to_char, id_to_tag, id_to_gtr, id_to_brown)
+model.save_mappings(id_to_word, id_to_char, id_to_tag, id_to_gtr, id_to_brown)
 
 # Build the model
 f_train, f_eval = model.build(**parameters)
