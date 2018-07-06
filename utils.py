@@ -16,7 +16,7 @@ def get_name(parameters):
     Generate a model name from its parameters.
     """
     if parameters['model']:
-        return paraterms['model']
+        return parameters['model']
     else:
         l = []
         for k, v in parameters.items():
