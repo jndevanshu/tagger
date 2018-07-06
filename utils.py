@@ -234,6 +234,8 @@ def create_input(data, parameters, add_label, singletons=None):
         input.append(caps)
     if parameters['gazetteer']:
         input.append(data['gazetteer'])
+    if parameters['brown']:
+        input.append(data['brown'])
     if add_label:
         input.append(data['tags'])
     return input

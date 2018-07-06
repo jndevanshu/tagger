@@ -122,6 +122,26 @@ def tag_mapping(sentences):
     return dico, tag_to_id, id_to_tag
 
 
+def brown_mapping(filename):
+    """
+    Create Brown mapping
+    """
+    with open(filename) as f:
+        data = f.readlines()
+    data = [(re.split("\s+", line.strip())[1], re.split("\s+", line.strip())[0]) for line in data if len(line.strip()) > 0]
+    dict_brown = defaultdict(lambda: 0)
+    brown_to_id = {"<UNK>": 0}
+    id_to_brown = {0: "<UNK>"}
+    idx = 0
+    for (entity, tag) in data:
+        if tag not in gtr_to_id:
+            brown_to_id[tag] = idx + 1
+            id_to_brown[idx + 1] = tag
+            idx += 1
+        dict_brown[entity.lower()] = brown_to_id[tag]
+    return dict_brown, brown_to_id, id_to_brown        
+
+
 def gazetteer_mapping(filename):
     """
     Create gazetteer mapping
@@ -176,6 +196,12 @@ def gazetteer_feature(s, gazetteer_list):
     else:
         return 0
 
+def brown_feature(s, brown_dict):
+    if s.lower() in brown_dict:
+        return brown_dict[s.lower()]
+    else:
+        return 0
+
 def prepare_sentence(str_words, word_to_id, char_to_id, gazetteer_list, lower=False):
     """
     Prepare a sentence for evaluation.
@@ -196,7 +222,7 @@ def prepare_sentence(str_words, word_to_id, char_to_id, gazetteer_list, lower=Fa
     }
 
 
-def prepare_dataset(sentences, word_to_id, char_to_id, gazetteer_list, tag_to_id, lower=False):
+def prepare_dataset(sentences, word_to_id, char_to_id, gazetteer_list, brown_dict, tag_to_id, lower=False):
     """
     Prepare the dataset. Return a list of lists of dictionaries containing:
         - word indexes
@@ -214,6 +240,7 @@ def prepare_dataset(sentences, word_to_id, char_to_id, gazetteer_list, tag_to_id
                  for w in str_words]
         caps = [cap_feature(w) for w in str_words]
         gazetteer = [gazetteer_feature(w, gazetteer_list) for w in str_words]
+        brown = [brown_feature(w, brown_dict) for w in str_words]
         tags = [tag_to_id[w[-1]] for w in s]
         data.append({
             'str_words': str_words,
@@ -221,6 +248,7 @@ def prepare_dataset(sentences, word_to_id, char_to_id, gazetteer_list, tag_to_id
             'chars': chars,
             'caps': caps,
             'gazetteer': gazetteer,
+            'brown': brown
             'tags': tags,
         })
     return data

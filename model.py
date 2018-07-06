@@ -49,7 +49,7 @@ class Model(object):
             self.reload_mappings()
         self.components = {}
 
-    def save_mappings(self, id_to_word, id_to_char, id_to_tag, id_to_gtr=None):
+    def save_mappings(self, id_to_word, id_to_char, id_to_tag, id_to_gtr=None, id_to_brown=None):
         """
         We need to save the mappings if we want to use the model later.
         """
@@ -57,12 +57,14 @@ class Model(object):
         self.id_to_char = id_to_char
         self.id_to_tag = id_to_tag
         self.id_to_gtr = id_to_gtr
+        self.id_to_brown = id_to_brown
         with open(self.mappings_path, 'wb') as f:
             mappings = {
                 'id_to_word': self.id_to_word,
                 'id_to_char': self.id_to_char,
                 'id_to_tag': self.id_to_tag,
-                'id_to_gtr': self.id_to_gtr
+                'id_to_gtr': self.id_to_gtr,
+                'id_to_brown': self.id_to_brown
             }
             cPickle.dump(mappings, f)
 
@@ -135,13 +137,26 @@ class Model(object):
         n_tags = len(self.id_to_tag)
 
         if self.id_to_gtr is not None:
+            print("Adding gazetteer...")
             is_gtr = True
         else:
+            print("Not adding gazetteer...")
             is_gtr = False
+
+        if self.id_to_brown is not None:
+            print("Adding brown...")
+            is_brown = True
+        else:
+            print("Not adding brown...")
+            is_brown = False
 
         # Gazetteer features
         if is_gtr:
             n_gtr = len(self.id_to_gtr)
+
+        # Brown features
+        if is_brown:
+            n_brown = len(self.id_to_brown)
 
         # Number of capitalization features
         if cap_dim:
@@ -158,6 +173,8 @@ class Model(object):
             cap_ids = T.ivector(name='cap_ids')
         if is_gtr:
             gtr_ids = T.ivector(name='gtr_ids')
+        if is_brown:
+            brown_ids = T.ivector(name='brown_ids')
 
         # Sentence length
         s_len = (word_ids if word_dim else char_pos_ids).shape[0]
@@ -259,6 +276,11 @@ class Model(object):
             gtr_layer = EmbeddingLayer(n_gtr, 1, name='gtr_layer')
             inputs.append(gtr_layer.link(gtr_ids))
 
+        if is_brown:
+            input_dim += 1
+            brown_layer = EmbeddingLayer(n_brown, 1, name='brown_layer')
+            inputs.append(brown_layer.link(brown_ids))
+
         # Prepare final input
         inputs = T.concatenate(inputs, axis=1) if len(inputs) != 1 else inputs[0]
 
@@ -354,6 +376,9 @@ class Model(object):
         if is_gtr:
             self.add_component(gtr_layer)
             params.extend(gtr_layer.params)
+        if is_brown:
+            self.add_component(brown_layer)
+            params.extend(brown_layer.params)
         self.add_component(final_layer)
         params.extend(final_layer.params)
         if crf:
@@ -376,6 +401,8 @@ class Model(object):
             eval_inputs.append(cap_ids)
         if is_gtr:
             eval_inputs.append(gtr_ids)
+        if is_brown:
+            eval_inputs.append(brown_ids)
         train_inputs = eval_inputs + [tag_ids]
 
         # Parse optimization method parameters
