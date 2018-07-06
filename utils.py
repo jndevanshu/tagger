@@ -15,14 +15,17 @@ def get_name(parameters):
     """
     Generate a model name from its parameters.
     """
-    l = []
-    for k, v in parameters.items():
-        if type(v) is str and "/" in v:
-            l.append((k, v[::-1][:v[::-1].index('/')][::-1]))
-        else:
-            l.append((k, v))
-    name = ",".join(["%s=%s" % (k, str(v).replace(',', '')) for k, v in l])
-    return "".join(i for i in name if i not in "\/:*?<>|")
+    if parameters['model']:
+        return paraterms['model']
+    else:
+        l = []
+        for k, v in parameters.items():
+            if type(v) is str and "/" in v:
+                l.append((k, v[::-1][:v[::-1].index('/')][::-1]))
+            else:
+                l.append((k, v))
+        name = ",".join(["%s=%s" % (k, str(v).replace(',', '')) for k, v in l])
+        return "".join(i for i in name if i not in "\/:*?<>|")
 
 
 def set_values(name, param, pretrained):

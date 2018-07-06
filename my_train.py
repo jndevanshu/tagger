@@ -37,6 +37,10 @@ optparser.add_option(
     help="Brown Cluster paths file location"
 )
 optparser.add_option(
+    "-m", "--model", default="",
+    help="model dir location"
+)
+optparser.add_option(
     "-s", "--tag_scheme", default="iobes",
     help="Tagging scheme (IOB or IOBES)"
 )
@@ -135,6 +139,12 @@ if len(opts.brown.strip()) > 0:
     assert os.path.isfile(opts.brown)
 else:
     parameters['brown'] = None
+
+if len(opts.model.strip()) > 0:
+    parameters['model'] = opts.model
+else:
+    parameters['model'] = None
+
 
 assert parameters['char_dim'] > 0 or parameters['word_dim'] > 0
 assert 0. <= parameters['dropout'] < 1.0
