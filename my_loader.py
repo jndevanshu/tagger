@@ -248,8 +248,8 @@ def prepare_dataset(sentences, word_to_id, char_to_id, gazetteer_list, brown_dic
             'chars': chars,
             'caps': caps,
             'gazetteer': gazetteer,
-            'brown': brown
-            'tags': tags,
+            'brown': brown,
+            'tags': tags
         })
     return data
 
