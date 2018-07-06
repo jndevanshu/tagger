@@ -135,6 +135,20 @@ def iob_iobes(tags):
             raise Exception('Invalid IOB format!')
     return new_tags
 
+def iob_bin(tags):
+    """
+    IOB -> IOBES
+    """
+    new_tags = []
+    for i, tag in enumerate(tags):
+        if tag == 'O':
+            new_tags.append(tag)
+        elif tag.startswith("B-") or tag.startswith("I-"):
+            new_tags.append('N')
+        else:
+            raise Exception('Invalid IOB format!')
+    return new_tags
+
 
 def iobes_iob(tags):
     """

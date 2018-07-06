@@ -3,7 +3,7 @@ import re
 import codecs
 import random
 from utils import create_dico, create_mapping, zero_digits
-from utils import iob2, iob_iobes
+from utils import iob2, iob_iobes, iob_bin
 from collections import defaultdict
 
 from ccg_nlpy.core.text_annotation import TextAnnotation
@@ -80,6 +80,10 @@ def update_tag_scheme(sentences, tag_scheme):
                 word[-1] = new_tag
         elif tag_scheme == 'iobes':
             new_tags = iob_iobes(tags)
+            for word, new_tag in zip(s, new_tags):
+                word[-1] = new_tag
+        elif tag_scheme == 'bin':
+            new_tags = iob_bin(tags)
             for word, new_tag in zip(s, new_tags):
                 word[-1] = new_tag
         else:

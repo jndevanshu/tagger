@@ -42,7 +42,7 @@ optparser.add_option(
 )
 optparser.add_option(
     "-s", "--tag_scheme", default="iobes",
-    help="Tagging scheme (IOB or IOBES)"
+    help="Tagging scheme (IOB or IOBES or BIN))"
 )
 optparser.add_option(
     "-l", "--lower", default="0",
@@ -148,7 +148,7 @@ else:
 
 assert parameters['char_dim'] > 0 or parameters['word_dim'] > 0
 assert 0. <= parameters['dropout'] < 1.0
-assert parameters['tag_scheme'] in ['iob', 'iobes']
+assert parameters['tag_scheme'] in ['iob', 'iobes', 'bin']
 assert not parameters['all_emb'] or parameters['pre_emb']
 assert not parameters['pre_emb'] or parameters['word_dim'] > 0
 assert not parameters['pre_emb'] or os.path.isfile(parameters['pre_emb'])
