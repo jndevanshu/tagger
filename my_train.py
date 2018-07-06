@@ -199,9 +199,9 @@ else:
 dico_chars, char_to_id, id_to_char = char_mapping(train_sentences)
 dico_tags, tag_to_id, id_to_tag = tag_mapping(train_sentences)
 gtr_dict = {}
-id_to_gtr = {}
+id_to_gtr = None
 brown_dict = {}
-id_to_brown = {}
+id_to_brown = None
 if parameters['gazetteer']:
     gtr_dict, gtr_to_id, id_to_gtr = gazetteer_mapping(parameters['gazetteer'])
 if parameters['brown']:
