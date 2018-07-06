@@ -205,7 +205,7 @@ id_to_brown = {}
 if parameters['gazetteer']:
     gtr_dict, gtr_to_id, id_to_gtr = gazetteer_mapping(parameters['gazetteer'])
 if parameters['brown']:
-    brown_dict, brown_to_id, id_to_brown = brown_mapping(paramters['brown'])
+    brown_dict, brown_to_id, id_to_brown = brown_mapping(parameters['brown'])
 
 # Index data
 train_data = prepare_dataset(
