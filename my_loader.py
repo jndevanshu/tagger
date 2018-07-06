@@ -134,7 +134,7 @@ def brown_mapping(filename):
     id_to_brown = {0: "<UNK>"}
     idx = 0
     for (entity, tag) in data:
-        if tag not in gtr_to_id:
+        if tag not in brown_to_id:
             brown_to_id[tag] = idx + 1
             id_to_brown[idx + 1] = tag
             idx += 1
