@@ -78,6 +78,8 @@ class Model(object):
         self.id_to_word = mappings['id_to_word']
         self.id_to_char = mappings['id_to_char']
         self.id_to_tag = mappings['id_to_tag']
+        self.id_to_gtr = mappings['id_to_gtr']
+        self.id_to_brown = mappings['id_to_brown']
 
     def add_component(self, param):
         """
@@ -125,6 +127,7 @@ class Model(object):
               pre_emb,
               crf,
               cap_dim,
+              l1_model=None,
               training=True,
               **kwargs
               ):
@@ -150,6 +153,13 @@ class Model(object):
             print("Not adding brown...")
             is_brown = False
 
+        if l1_model is not None:
+            print("Adding L1 features")
+            is_l1 = True
+        else:
+            print("Not adding L1 features")
+            is_l1 = False
+
         # Gazetteer features
         if is_gtr:
             n_gtr = len(self.id_to_gtr)
@@ -157,6 +167,10 @@ class Model(object):
         # Brown features
         if is_brown:
             n_brown = len(self.id_to_brown)
+
+        # L1 features
+        if is_l1:
+            n_l1 = 2
 
         # Number of capitalization features
         if cap_dim:
@@ -175,6 +189,8 @@ class Model(object):
             gtr_ids = T.ivector(name='gtr_ids')
         if is_brown:
             brown_ids = T.ivector(name='brown_ids')
+        if is_l1:
+            l1_ids = T.ivector(name='l1_ids')
 
         # Sentence length
         s_len = (word_ids if word_dim else char_pos_ids).shape[0]
@@ -281,6 +297,11 @@ class Model(object):
             brown_layer = EmbeddingLayer(n_brown, 1, name='brown_layer')
             inputs.append(brown_layer.link(brown_ids))
 
+        if is_l1:
+            input_dim += 1
+            l1_layer = EmbeddingLayer(n_l1, 1, name='l1_layer')
+            inputs.append(l1_layer.link(l1_ids))
+
         # Prepare final input
         inputs = T.concatenate(inputs, axis=1) if len(inputs) != 1 else inputs[0]
 
@@ -379,6 +400,9 @@ class Model(object):
         if is_brown:
             self.add_component(brown_layer)
             params.extend(brown_layer.params)
+        if is_l1:
+            self.add_component(l1_layer)
+            params.extend(l1_layer.params)
         self.add_component(final_layer)
         params.extend(final_layer.params)
         if crf:
@@ -403,6 +427,8 @@ class Model(object):
             eval_inputs.append(gtr_ids)
         if is_brown:
             eval_inputs.append(brown_ids)
+        if is_l1:
+            eval_inputs.append(l1_ids)
         train_inputs = eval_inputs + [tag_ids]
 
         # Parse optimization method parameters

@@ -41,6 +41,10 @@ optparser.add_option(
     help="model dir location"
 )
 optparser.add_option(
+    "-o", "--l1_model", default="",
+    help="path to level1 model"
+)
+optparser.add_option(
     "-s", "--tag_scheme", default="iobes",
     help="Tagging scheme (IOB or IOBES or BIN))"
 )
@@ -123,6 +127,17 @@ parameters['cap_dim'] = opts.cap_dim
 parameters['crf'] = opts.crf == 1
 parameters['dropout'] = opts.dropout
 parameters['lr_method'] = opts.lr_method
+
+l1_model = None
+l1_f_eval = None
+
+if len(opts.l1_model.strip()) > 0:
+    parameters['l1_model'] = opts.l1_model
+    assert os.path.isdir(parameters['l1_model'])
+    l1_model = Model(model_path=parameters['l1_model'])
+    l1_parameters = l1_model.parameters
+    _, l1_f_eval = l1_model.build(training=False, **l1_parameters)
+    l1_model.reload()
 
 # Check parameters validity
 assert os.path.isdir(opts.train)
@@ -208,14 +223,15 @@ if parameters['brown']:
     brown_dict, brown_to_id, id_to_brown = brown_mapping(parameters['brown'])
 
 # Index data
+
 train_data = prepare_dataset(
-    train_sentences, word_to_id, char_to_id, gtr_dict, brown_dict, tag_to_id, lower
+    train_sentences, word_to_id, char_to_id, gtr_dict, brown_dict, tag_to_id, l1_model, l1_f_eval, lower
 )
 dev_data = prepare_dataset(
-    dev_sentences, word_to_id, char_to_id, gtr_dict, brown_dict, tag_to_id, lower
+    dev_sentences, word_to_id, char_to_id, gtr_dict, brown_dict, tag_to_id, l1_model, l1_f_eval, lower
 )
 test_data = prepare_dataset(
-    test_sentences, word_to_id, char_to_id, gtr_dict, brown_dict, tag_to_id, lower
+    test_sentences, word_to_id, char_to_id, gtr_dict, brown_dict, tag_to_id, l1_model, l1_f_eval, lower
 )
 
 print "%i / %i / %i sentences in train / dev / test." % (

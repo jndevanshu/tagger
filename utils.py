@@ -143,8 +143,10 @@ def iob_bin(tags):
     for i, tag in enumerate(tags):
         if tag == 'O':
             new_tags.append(tag)
-        elif tag.startswith("B-") or tag.startswith("I-"):
-            new_tags.append('N')
+        elif tag.startswith("B-"):
+            new_tags.append('B-N')
+        elif tag.startswith("I-"):
+            new_tags.append('I-N')
         else:
             raise Exception('Invalid IOB format!')
     return new_tags
@@ -253,6 +255,8 @@ def create_input(data, parameters, add_label, singletons=None):
         input.append(data['gazetteer'])
     if parameters['brown']:
         input.append(data['brown'])
+    if 'l1_model' in parameters:
+        input.append(data['pred'])
     if add_label:
         input.append(data['tags'])
     return input

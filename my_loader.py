@@ -2,7 +2,7 @@ import os
 import re
 import codecs
 import random
-from utils import create_dico, create_mapping, zero_digits
+from utils import create_dico, create_mapping, zero_digits, create_input
 from utils import iob2, iob_iobes, iob_bin
 from collections import defaultdict
 
@@ -206,7 +206,7 @@ def brown_feature(s, brown_dict):
     else:
         return 0
 
-def prepare_sentence(str_words, word_to_id, char_to_id, gazetteer_list, lower=False):
+def prepare_sentence(str_words, word_to_id, char_to_id, gazetteer_list, brown_dict, lower=False):
     """
     Prepare a sentence for evaluation.
     """
@@ -217,16 +217,18 @@ def prepare_sentence(str_words, word_to_id, char_to_id, gazetteer_list, lower=Fa
              for w in str_words]
     caps = [cap_feature(w) for w in str_words]
     gazetteer = [gazetteer_feature(w, gazetteer_list) for w in str_words]
+    brown = [brown_feature(w, brown_dict) for w in str_words]
     return {
         'str_words': str_words,
         'words': words,
         'chars': chars,
         'caps': caps,
-        'gazetteer': gazetteer
+        'gazetteer': gazetteer,
+        'brown': brown
     }
 
 
-def prepare_dataset(sentences, word_to_id, char_to_id, gazetteer_list, brown_dict, tag_to_id, lower=False):
+def prepare_dataset(sentences, word_to_id, char_to_id, gazetteer_list, brown_dict, tag_to_id, l1_model, l1_f_eval, lower=False):
     """
     Prepare the dataset. Return a list of lists of dictionaries containing:
         - word indexes
@@ -237,6 +239,7 @@ def prepare_dataset(sentences, word_to_id, char_to_id, gazetteer_list, brown_dic
     data = []
     for s in sentences:
         str_words = [w[0] for w in s]
+        
         words = [word_to_id[f(w) if f(w) in word_to_id else '<UNK>']
                  for w in str_words]
         # Skip characters that are not in the training set
@@ -245,16 +248,32 @@ def prepare_dataset(sentences, word_to_id, char_to_id, gazetteer_list, brown_dic
         caps = [cap_feature(w) for w in str_words]
         gazetteer = [gazetteer_feature(w, gazetteer_list) for w in str_words]
         brown = [brown_feature(w, brown_dict) for w in str_words]
-        tags = [tag_to_id[w[-1]] for w in s]
-        data.append({
+        sent = {
             'str_words': str_words,
             'words': words,
             'chars': chars,
             'caps': caps,
             'gazetteer': gazetteer,
             'brown': brown,
-            'tags': tags
-        })
+        }
+
+        if l1_model is not None:
+            input = create_input(sent, l1_model.parameters, False)
+            try:
+                if l1_model.parameters['crf']:
+                    y_preds = np.array(f_eval(*input))[1:-1]
+                else:
+                    y_preds = f_eval(*input).argmax(axis=1)
+                y_preds = [l1_model.id_to_tag[y_pred] for y_pred in y_preds]
+            except Exception as e:
+                y_preds = ["O"] * len(str_words)
+
+            sent['pred'] = [0 if y_pred == "O" else 1 for y_pred in y_preds]
+
+        tags = [tag_to_id[w[-1]] for w in s]
+        sent['tags'] = tags
+        data.append(sent)
+
     return data
 
 
