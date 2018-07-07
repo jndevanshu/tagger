@@ -206,7 +206,7 @@ def brown_feature(s, brown_dict):
     else:
         return 0
 
-def prepare_sentence(str_words, word_to_id, char_to_id, gazetteer_list, brown_dict, lower=False):
+def prepare_sentence(str_words, word_to_id, char_to_id, gazetteer_list={}, brown_dict={}, lower=False):
     """
     Prepare a sentence for evaluation.
     """
