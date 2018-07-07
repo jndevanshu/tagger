@@ -132,12 +132,14 @@ l1_model = None
 l1_f_eval = None
 
 if len(opts.l1_model.strip()) > 0:
+    print("Building L1 model:")
     parameters['l1_model'] = opts.l1_model
     assert os.path.isdir(parameters['l1_model'])
     l1_model = Model(model_path=parameters['l1_model'])
     l1_parameters = l1_model.parameters
     _, l1_f_eval = l1_model.build(training=False, **l1_parameters)
     l1_model.reload()
+    print("Done building l1 model")
 
 # Check parameters validity
 assert os.path.isdir(opts.train)
