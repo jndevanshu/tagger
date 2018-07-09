@@ -48,6 +48,19 @@ print "Loading model..."
 model = Model(model_path=opts.model)
 parameters = model.parameters
 
+l1_model = None
+l1_f_eval = None
+
+if 'l1_model' in parameters:
+    print("Building L1 model:")
+    parameters['l1_model'] = opts.l1_model
+    assert os.path.isdir(parameters['l1_model'])
+    l1_model = Model(model_path=parameters['l1_model'])
+    l1_parameters = l1_model.parameters
+    _, l1_f_eval = l1_model.build(training=False, **l1_parameters)
+    l1_model.reload()
+    print("Done building l1 model")
+
 # Load reverse mappings
 word_to_id, char_to_id, tag_to_id = [
     {v: k for k, v in x.items()}
@@ -90,8 +103,7 @@ for doc in file_list:
                 line = zero_digits(line)
             words = line.rstrip().split()
             # Prepare input
-            sentence = prepare_sentence(words, word_to_id, char_to_id,
-                                        lower=parameters['lower'])
+            sentence = prepare_sentence(words, word_to_id, char_to_id, l1_model=l1_model, l1_f_eval=l1_f_eval, lower=parameters['lower'])
             print(sentence)
             input = create_input(sentence, parameters, False)
             # Decoding
