@@ -7,7 +7,7 @@ import optparse
 import sys
 import json
 import numpy as np
-from loader import prepare_sentence
+from my_loader import prepare_sentence
 from utils import create_input, iobes_iob, iob_ranges, zero_digits
 from model import Model
 
