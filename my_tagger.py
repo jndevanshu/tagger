@@ -53,7 +53,7 @@ l1_f_eval = None
 
 if 'l1_model' in parameters:
     print("Building L1 model:")
-    parameters['l1_model'] = opts.l1_model
+    parameters['l1_model'] = parameters['l1_model']
     assert os.path.isdir(parameters['l1_model'])
     l1_model = Model(model_path=parameters['l1_model'])
     l1_parameters = l1_model.parameters
