@@ -54,7 +54,8 @@ def load_sentences(path, lower, zeros, ratio=1.0):
                     sentence.append([token, ner_dict[span]])
                 else:
                     sentence.append([token, "O"])
-            sentences.append(sentence)
+            if len(sentence) > 1:
+                sentences.append(sentence)
 
     random.shuffle(sentences)
     train_sentences = sentences[:int(ratio*len(sentences))]
